@@ -1,5 +1,6 @@
 from rest_framework import status
 from rest_framework.views import APIView
+from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 import json
 from django.contrib.auth.models import User
@@ -8,7 +9,8 @@ import random
 import string
 # from .tasks import send_verification_email
 
-from .models import Account
+from .models import Account, AvatarImages, AvatarOwnership
+from .serializers import AvatarSerializer
 
 all_characters = string.ascii_letters + string.digits
 
@@ -28,6 +30,7 @@ class RegisterView(APIView):
         except:
             pass
         data = json.loads(request.body)
+        username = data["username"]
         email = data["email"]
         password = data["password"]
         errors = {}
@@ -38,16 +41,14 @@ class RegisterView(APIView):
             errors["email"] = "Email is taken"
         except:
             pass
+        try:
+            User.objects.get(username=username)
+            register_fail = True
+            errors["username"] = "Username is taken"
+        except:
+            pass
 
-        username = email.split("@")[0] + str(random.randint(1000, 9999))
-
-        while True:
-            try:
-                User.objects.get(username=username)
-                username = email.split("@")[0] + str(random.randint(1000, 9999))
-                continue
-            except:
-                break
+        # username = email.split("@")[0] + str(random.randint(1000, 9999))
 
         if len(password) < 6:
             register_fail = True
@@ -89,11 +90,11 @@ class LoginView(APIView):
         except:
             pass
         data = json.loads(request.body)
-        email = data["email"]
+        username = data["username"]
         password = data["password"]
 
         try:
-            the_user = User.objects.get(email=email)
+            the_user = User.objects.get(username=username)
         except:
             return Response({"error": "Wrong credentials, please try again"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -127,9 +128,15 @@ class LoginCheck(APIView):
 
     def get(self, request):
         account = Account.objects.get(user=request.user)
+        icon = None
+        try:
+            icon = account.profile_photo.avatar_image.url
+        except:
+            pass
         return Response({"success": "You are logged in",
                          "user": {"username": request.user.username, "email": request.user.email,
-                                  "verified": account.verified}})
+                                  "verified": account.verified, "icon": icon, "gold_coins": account.gold_coins,
+                                  "silver_coins": account.silver_coins}})
 
 
 class ChangePasswordView(APIView):
@@ -186,3 +193,61 @@ class ChangeEmailView(APIView):
         # send_verification_email(verification_code=account.verification_url, send_to_email=request.user.email)
         return Response({"success": "Email has been updated. To verify your account follow the steps in the email."},
                         status=status.HTTP_202_ACCEPTED)
+
+
+class ShowAllIconsView(ListAPIView):
+    http_method_names = ["get", ]
+    queryset = AvatarImages.objects.all()
+    serializer_class = AvatarSerializer
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"account": Account.objects.get(user=self.request.user)})
+        return context
+
+
+class BuyIconView(APIView):
+    http_method_names = ["post", ]
+
+    def post(self, request):
+        data = json.loads(request.body)
+        try:
+            icon = AvatarImages.objects.get(id=data["icon_id"])
+        except Exception as e:
+            return Response({"error": "Icon doesn't exist", "e": str(e)}, status=status.HTTP_404_NOT_FOUND)
+
+        account = Account.objects.get(user=request.user)
+        if AvatarOwnership.objects.filter(account=account, avatar=icon):
+            return Response({"error": "You already have this icon"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if icon.free_coins and account.silver_coins >= icon.cost:
+            account.silver_coins -= icon.cost
+            AvatarOwnership.objects.create(account=account, avatar=icon)
+        elif not icon.free_coins and account.gold_coins >= icon.cost:
+            account.gold_coins -= icon.cost
+            AvatarOwnership.objects.create(account=account, avatar=icon)
+        else:
+            return Response({"error": "You don't have enough coins to buy this icon"},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        account.save()
+        return Response({"success": "You have purchased the icon"})
+
+
+class SetIconView(APIView):
+    http_method_names = ["post", ]
+
+    def post(self, request):
+        data = json.loads(request.body)
+        try:
+            icon = AvatarImages.objects.get(id=data["icon_id"])
+        except Exception as e:
+            return Response({"error": "Icon doesn't exist", "e": str(e)}, status=status.HTTP_404_NOT_FOUND)
+
+        account = Account.objects.get(user=request.user)
+        if not AvatarOwnership.objects.filter(account=account, avatar=icon):
+            return Response({"error": "You don't have this icon"}, status=status.HTTP_400_BAD_REQUEST)
+
+        account.profile_photo = icon
+        account.save()
+        return Response({"success": "Icon has been changed"})
