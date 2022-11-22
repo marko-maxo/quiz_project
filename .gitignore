@@ -127,3 +127,12 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+
+new_quiz_env/
+
+# migrations
+**/migrations/**
+!**/migrations
+!**/migrations/__init__.py
+
