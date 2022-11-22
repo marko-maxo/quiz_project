@@ -65,6 +65,7 @@ INSTALLED_APPS = [
 
     'accountsApp',
     'ChatApp',
+    'quizApp',
 ]
 
 MIDDLEWARE = [
