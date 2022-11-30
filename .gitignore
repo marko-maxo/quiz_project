@@ -136,3 +136,4 @@ new_quiz_env/
 !**/migrations
 !**/migrations/__init__.py
 
+.idea/
