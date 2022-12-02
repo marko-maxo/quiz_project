@@ -10,7 +10,6 @@ import string
 all_characters = string.ascii_letters + string.digits
 
 
-# Create your models here.
 class AvatarImages(models.Model):
     avatar_image = models.ImageField(upload_to="profile_images/", null=False, blank=False)
     free_coins = models.BooleanField(default=True)
@@ -36,6 +35,13 @@ class Account(models.Model):
         return self.user.username
 
 
+class ForgotPassword(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    reset_url = models.CharField(blank=False, null=False, max_length=40)
+    reset_done = models.BooleanField(default=False)
+    expires_at = models.FloatField(null=True, blank=True)
+
+
 class AvatarOwnership(models.Model):
     account = models.ForeignKey(Account, on_delete=models.CASCADE)
     avatar = models.ForeignKey(AvatarImages, on_delete=models.CASCADE)
@@ -56,6 +62,7 @@ def got_avatar_timestamp(sender, instance, created, *args, **kwargs):
     if created:
         instance.owned_since = time.time()
         instance.save()
+
 
 
 post_save.connect(create_account_for_user, sender=User)

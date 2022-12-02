@@ -1,3 +1,5 @@
+import time
+
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView
@@ -9,11 +11,11 @@ import random
 import string
 # from .tasks import send_verification_email
 
-from .models import Account, AvatarImages, AvatarOwnership
+from .models import Account, AvatarImages, AvatarOwnership, ForgotPassword
 from .serializers import AvatarSerializer
 
 all_characters = string.ascii_letters + string.digits
-
+allowed_username_characters = all_characters + "_-"
 
 # Create your views here.
 
@@ -25,7 +27,7 @@ class RegisterView(APIView):
         current_jwt = ""
         try:
             current_jwt = request.COOKIES["jwt"]
-            if current_jwt:
+            if current_jwt and decodeJWT(current_jwt)[0]:
                 return Response({"error": "Already logged in"}, status=status.HTTP_403_FORBIDDEN)
         except:
             pass
@@ -48,6 +50,10 @@ class RegisterView(APIView):
         except:
             pass
 
+        for character in username:
+            if character not in allowed_username_characters:
+                errors["bad_characters"] = "Only letters, digits and _- are allowed for username"
+                break
         # username = email.split("@")[0] + str(random.randint(1000, 9999))
 
         if len(password) < 6:
@@ -85,7 +91,7 @@ class LoginView(APIView):
         current_jwt = ""
         try:
             current_jwt = request.COOKIES["jwt"]
-            if current_jwt:
+            if current_jwt and decodeJWT(current_jwt)[0]:
                 return Response({"error": "Already logged in"}, status=status.HTTP_403_FORBIDDEN)
         except:
             pass
@@ -252,3 +258,63 @@ class SetIconView(APIView):
         account.profile_photo = icon
         account.save()
         return Response({"success": "Icon has been changed"})
+
+
+class ForgotPasswordView(APIView):
+    http_method_names = ["post", ]
+    authentication_classes = []
+
+    def post(self, request):
+        try:
+            current_jwt = request.COOKIES["jwt"]
+            if current_jwt and decodeJWT(current_jwt)[0]:
+                return Response({"error": "Already logged in"}, status=status.HTTP_403_FORBIDDEN)
+        except:
+            pass
+        data = json.loads(request.body)
+        username = data["username"]
+        try:
+            user = User.objects.get(username=username)
+        except:
+            return Response({"success": "Reset link has been sent to your email. It will be active for 15 minutes"})
+
+        ForgotPassword.objects.create(
+            user=user,
+            expires_at=time.time() + 15*60,
+            reset_url=''.join(random.choice(all_characters) for x in range(30))
+        )
+
+        return Response({"success": "Reset link has been sent to your email. It will be active for 15 minutes"})
+
+class ResetPasswordView(APIView):
+    http_method_names = ["post", ]
+    authentication_classes = []
+
+    def post(self, request):
+        try:
+            current_jwt = request.COOKIES["jwt"]
+            if current_jwt and decodeJWT(current_jwt)[0]:
+                return Response({"error": "Already logged in"}, status=status.HTTP_403_FORBIDDEN)
+        except:
+            pass
+        data = json.loads(request.body)
+        reset_link = data["reset_link"]
+        password = data["password"]
+
+        try:
+            reset_link = ForgotPassword.objects.get(reset_url=reset_link)
+        except:
+            return Response({"error": "Reset link is not valid"})
+
+        if reset_link.expires_at < time.time() or reset_link.reset_done:
+            return Response({"error": "Reset link is not valid"})
+
+        if len(password) < 6:
+            return Response({"password": "Password is not long enough"})
+
+        reset_link.reset_done = True
+        user = reset_link.user
+        reset_link.save()
+        user.set_password(password)
+        user.save()
+        return Response({"success": "Password has been updated"})

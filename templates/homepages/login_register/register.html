@@ -1,0 +1,134 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Quiz Cosmos - Register</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+
+    <link rel="stylesheet" href="{% static 'login_register_pages/all.js' %}">
+    <link rel="stylesheet" href="{% static 'login_register_pages/all.css' %}">
+
+    <link rel="stylesheet" href="{% static 'login_register_pages/font-nunito.css' %}">
+    <link rel="stylesheet" href="{% static 'login_register_pages/sb-admin-2.min.css' %}">
+    <link rel="stylesheet" href="{% static 'login_register_pages/not_logged.css' %}">
+</head>
+<body class="bg-gradient-danger">
+<div class="container">
+
+    <div class="my-5">
+        <div class="card-body p-0">
+            <!-- Nested Row within Card Body -->
+            <!-- Div with class row is under -->
+
+    <div class="row">
+        <div class="col-lg-3">
+        </div>
+        <div class="card col-lg-6 border-0 shadow">
+            <a href="{% url 'index' %}">
+                <img src="{% static 'logo.png' %}" alt="Logo image"
+                     style="width: 80%; margin: auto; display: block; margin-top: 10px; margin-bottom: -30px;">
+            </a>
+            <div class="p-3 mt-4">
+                <div class="text-center">
+                    <h1 class="h4 text-gray-900 mb-4 fw-bold">Create an Account!</h1>
+                </div>
+                <form id="registerForm" class="user">
+                    <div class="col-xs-10 form-group mb-1 fields_to_disable">
+                        <p class="text-danger mb-1 text-center" style="display: none;"
+                           id="username_bad_characters">You can only use letters, numbers and _ in your username and it can't contain more and 30 characters</p>
+
+                        <input type="text" class="form-control form-control-user fields_to_disable" id="username"
+                               placeholder="Username" name="username"
+                               style="text-align: center; font-weight: bold; font-size: 18px;" required maxlength="30">
+                        <p class="text-danger text-center mb-0" style="visibility: hidden;" id="username_in_use">This
+                            username is already in
+                            use</p>
+                    </div>
+                    <div class="form-group mb-1">
+                        <input type="email" class="form-control form-control-user fields_to_disable" id="email"
+                               placeholder="Email Address" name="email"
+                               style="text-align: center; font-weight: bold; font-size: 18px;" required>
+                        <p class="text-danger text-center mb-0" style="visibility: hidden;" id="email_in_use">This email
+                            is already in
+                            use</p>
+                    </div>
+                    <p class="text-center" style="font-size: 14px; margin-top: -10px; margin-bottom: 5px;"
+                       id="password6info">
+                        Password has to be at least 6 characters long
+                    </p>
+                    <div class="form-group row">
+                        <div class="col-sm-6 mb-3 mb-sm-0">
+                            <input minlength="6" type="password"
+                                   class="form-control form-control-user fields_to_disable"
+                                   id="password" name="password" placeholder="Password"
+                                   style="text-align: center; font-weight: bold; font-size: 18px;" required>
+                        </div>
+                        <div class="col-sm-6">
+                            <input minlength="6" type="password"
+                                   class="form-control form-control-user fields_to_disable"
+                                   id="passwordConfirm" placeholder="Repeat Password"
+                                   style="text-align: center; font-weight: bold; font-size: 18px;" required>
+                        </div>
+                    </div>
+                    <p class="text-center text-danger" id="password_match" style="display: none;">
+                        Passwords have to match
+                    </p>
+                    <p class="text-center">
+                        By clicking the "Register account" button, you are creating an account, and agree to our
+                        <a href="/terms-of-service/">Terms of Service</a> and <a href="/privacy-policy/">Privacy
+                        Policy</a>
+                    </p>
+
+                    <div class="loader"></div>
+                    <hr>
+                    <input type="submit" id="register_btn" value="Register account"
+                           class="btn btn-primary btn-user btn-block">
+
+
+
+
+
+
+
+                </form>
+                <hr>
+                <div class="text-center">
+                    <a class="small" href="{% url 'login_page' %}">Already have an account? Login!</a>
+                </div>
+                <div class="text-center">
+                    <a class="small" href="{% url 'forgot_password_page' %}">Forgot Password?</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3">
+        </div>
+    </div>
+
+
+        </div>
+
+    </div>
+
+</div>
+<script src="{% static 'login_register_pages/jquery.js' %}"></script>
+<script src="{% static 'login_register_pages/jquery.easing.min.js' %}"></script>
+<script src="{% static 'login_register_pages/sb-admin-2.min.js' %}"></script>
+<script src="{% static 'login_register_pages/bootstrap4.js' %}"></script>
+
+
+    <script src="{% static 'login_register_pages/register.js' %}" id="register_script"
+            data-url-check="{% url 'create_user' %}"
+            data-url-check-after="{% url 'login_check' %}"
+            data-url-redirect="{% url 'dashboard' %}"></script>
+
+</body>
+</html>

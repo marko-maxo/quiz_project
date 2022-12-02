@@ -19,9 +19,21 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
+from Pages.views import *
 
 urlpatterns = [
     path('api/admin/', admin.site.urls),
     path('api/account/', include("accountsApp.urls"), name="account"),
     path('api/quiz/', include("quizApp.urls"), name="quiz"),
+
+    # Pages app
+    path("", index, name="index"),
+    path("login/", login_page, name="login_page"),
+    path("register/", register_page, name="register_page"),
+    path("forgot_password/", forgot_password_page, name="forgot_password_page"),
+    path("reset_password/<slug:reset_link>", reset_password_page, name="reset_password_page"),
+
+
+    path("dashboard/", dashboard, name="dashboard"),
+
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
